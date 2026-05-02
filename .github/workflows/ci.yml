@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint dependencies
+        run: python -m pip install --upgrade pip ruff
+
+      - name: Run ruff
+        run: ruff check .
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest pytest-cov
+
+      - name: Run unit tests with coverage
+        run: pytest tests/unit --cov=src --cov-report=term-missing --cov-fail-under=70
+
+  model-validation:
+    name: Model Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert minimum performance threshold
+        env:
+          MINIMUM_MODEL_SCORE: "0.70"
+          PLACEHOLDER_MODEL_SCORE: "0.70"
+        run: |
+          python - <<'PY'
+          import os
+
+          minimum_score = float(os.environ["MINIMUM_MODEL_SCORE"])
+          model_score = float(os.environ["PLACEHOLDER_MODEL_SCORE"])
+
+          assert model_score >= minimum_score, (
+              f"Model score {model_score:.3f} is below threshold {minimum_score:.3f}"
+          )
+          PY

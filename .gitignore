@@ -1,0 +1,20 @@
+data/*
+!data/raw/
+!data/raw/.gitkeep
+!data/processed/
+!data/processed/.gitkeep
+!data/splits/
+!data/splits/.gitkeep
+venv/
+.env
+mlruns/
+notebooks/.ipynb_checkpoints/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
