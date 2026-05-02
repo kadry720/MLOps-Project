@@ -8,6 +8,8 @@ data/*
 venv/
 .env
 mlruns/
+.coverage
+htmlcov/
 notebooks/.ipynb_checkpoints/
 
 # IDE-specific files
