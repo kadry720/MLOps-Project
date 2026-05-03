@@ -1,13 +1,13 @@
 stages:
   prepare:
-    cmd:
-    deps:
-    outs:
+    cmd: ""
+    deps: []
+    outs: []
   preprocess:
-    cmd:
-    deps:
-    outs:
+    cmd: ""
+    deps: []
+    outs: []
   featurize:
-    cmd:
-    deps:
-    outs:
+    cmd: ""
+    deps: []
+    outs: []

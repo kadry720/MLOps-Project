@@ -1,6 +1,5 @@
 data/*
-!data/raw/
-!data/raw/.gitkeep
+!data/*.dvc
 !data/processed/
 !data/processed/.gitkeep
 !data/splits/
