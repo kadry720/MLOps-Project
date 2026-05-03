@@ -1,0 +1,39 @@
+# Core data science and preprocessing
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.7.2
+imbalanced-learn==0.14.1
+scipy==1.16.3
+joblib==1.5.2
+
+# Experiment tracking and model registry
+mlflow==3.11.1
+optuna==4.8.0
+
+# Data and model validation
+pandera==0.31.1
+evidently==0.7.21
+
+# Serving and API testing
+fastapi==0.136.1
+uvicorn==0.46.0
+pydantic==2.12.5
+requests==2.32.5
+httpx==0.28.1
+
+# Monitoring
+prometheus_client==0.25.0
+
+# Data versioning and orchestration
+dvc==3.67.1
+prefect==3.6.29
+
+# Configuration, EDA, and reporting
+PyYAML==6.0.3
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# Testing and linting
+pytest==9.0.2
+pytest-cov==7.0.0
+ruff==0.15.12
