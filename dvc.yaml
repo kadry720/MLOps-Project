@@ -1,13 +1,35 @@
 stages:
-  prepare:
-    cmd: ""
-    deps: []
-    outs: []
   preprocess:
-    cmd: ""
-    deps: []
-    outs: []
-  featurize:
-    cmd: ""
-    deps: []
-    outs: []
+    cmd: python src/data/preprocessing.py
+    deps:
+      - src/data/preprocessing.py
+      - data/raw/train_transaction.csv
+      - data/raw/train_identity.csv
+      - configs/params.yaml
+    params:
+      - configs/params.yaml:
+          - data
+          - preprocessing
+          - artifacts
+    outs:
+      - data/processed/cleaned_data.csv
+      - data/splits/train.csv
+      - data/splits/test.csv
+      - models/preprocessing_pipeline.pkl
+
+  train:
+    cmd: python src/training/train.py
+    deps:
+      - src/training/train.py
+      - data/splits/train.csv
+      - data/splits/test.csv
+      - models/preprocessing_pipeline.pkl
+      - configs/params.yaml
+    params:
+      - configs/params.yaml:
+          - training
+          - models
+          - preprocessing
+          - artifacts
+    outs:
+      - models/best_model.pkl
