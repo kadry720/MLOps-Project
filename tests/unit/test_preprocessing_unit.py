@@ -59,7 +59,7 @@ def test_build_preprocessor_fits_and_transforms_mixed_data():
     preprocessor = build_preprocessor(
         numeric_features=["amount", "distance"],
         categorical_features=["card_type"],
-        params=params,
+        config=params,
     )
     transformed = preprocessor.fit_transform(features)
 

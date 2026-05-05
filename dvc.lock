@@ -1,0 +1,260 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python src/training/train.py
+    deps:
+    - path: configs/params.yaml
+      hash: md5
+      md5: bda0acb78505f7946f56e74c63f07440
+      size: 4232
+    - path: data/raw/train_identity.csv
+      hash: md5
+      md5: 8487db5001c8bad139f3318d5d3db416
+      size: 26529680
+    - path: data/raw/train_transaction.csv
+      hash: md5
+      md5: 58b4038d8715f5e11007b826bef00ce7
+      size: 683351067
+    - path: src/data/preprocessing.py
+      hash: md5
+      md5: 1bd4ad9960a4bc5771d4910ec89ebefb
+      size: 22370
+    - path: src/training/train.py
+      hash: md5
+      md5: b3a9d927516f35d1d05ede2782c7c955
+      size: 26880
+    params:
+      configs/params.yaml:
+        artifacts:
+          preprocessing_pipeline_path: models/preprocessing_pipeline.pkl
+          best_model_path: models/best_model.pkl
+          results_path: reports/mlflow_experiment_results.csv
+          cv_results_dir: reports/cv_results
+          plots_dir: reports/plots
+          classification_reports_dir: reports/classification_reports
+          screenshots_dir: reports/screenshots
+        data:
+          raw_transaction_path: data/raw/train_transaction.csv
+          raw_identity_path: data/raw/train_identity.csv
+          processed_path: data/processed/cleaned_data.csv
+          train_path: data/splits/train.csv
+          test_path: data/splits/test.csv
+          target_column: isFraud
+          id_column: TransactionID
+          sample_size: 50000
+          test_size: 0.2
+          random_state: 42
+        mlflow:
+          tracking_uri: http://localhost:5000
+          experiment_name: fraud-detection-experiments
+          registered_model_name: FraudDetectionBestModel
+          archive_existing_versions: true
+        models:
+          logistic_regression:
+            enabled: false
+            params:
+              max_iter: 1000
+              solver: liblinear
+              random_state: 42
+            grid:
+              classifier__C:
+              - 1.0
+              classifier__penalty:
+              - l2
+              classifier__class_weight:
+              - 
+              - balanced
+          random_forest:
+            enabled: false
+            params:
+              n_estimators: 200
+              class_weight: balanced_subsample
+              random_state: 42
+            grid:
+              classifier__n_estimators:
+              - 150
+              classifier__max_depth:
+              - 12
+              - 20
+              classifier__min_samples_split:
+              - 2
+              classifier__min_samples_leaf:
+              - 3
+          gradient_boosting:
+            enabled: false
+            params:
+              random_state: 42
+            grid:
+              classifier__n_estimators:
+              - 150
+              classifier__learning_rate:
+              - 0.05
+              - 0.1
+              classifier__max_depth:
+              - 3
+          extra_trees:
+            enabled: true
+            params:
+              n_estimators: 250
+              class_weight: balanced_subsample
+              random_state: 42
+              n_jobs: 1
+            grid:
+              classifier__max_depth:
+              - 
+              classifier__min_samples_leaf:
+              - 1
+              - 3
+              classifier__max_features:
+              - sqrt
+          hist_gradient_boosting:
+            enabled: true
+            params:
+              class_weight: balanced
+              early_stopping: true
+              random_state: 42
+            grid:
+              classifier__max_iter:
+              - 150
+              - 250
+              classifier__learning_rate:
+              - 0.05
+              - 0.08
+              classifier__max_leaf_nodes:
+              - 31
+          balanced_random_forest:
+            enabled: true
+            params:
+              n_estimators: 250
+              sampling_strategy: all
+              replacement: true
+              bootstrap: false
+              random_state: 42
+              n_jobs: 1
+            grid:
+              classifier__max_depth:
+              - 16
+              - 
+              classifier__min_samples_leaf:
+              - 1
+              classifier__max_features:
+              - sqrt
+          easy_ensemble:
+            enabled: true
+            params:
+              n_estimators: 10
+              sampling_strategy: auto
+              random_state: 42
+              n_jobs: 1
+            grid:
+              classifier__n_estimators:
+              - 10
+        preprocessing:
+          numeric_imputer_strategy: median
+          categorical_imputer_strategy: constant
+          categorical_fill_value: missing
+          scaler: standard
+          encoder_handle_unknown: ignore
+          encoder_max_categories: 50
+          encoder_min_frequency: 10
+          use_feature_engineering: true
+          amount_column: TransactionAmt
+          log_transform_features:
+          - TransactionAmt
+          use_transaction_time_features: true
+          transaction_time_column: TransactionDT
+          categorical_like_numeric_features:
+          - card1
+          - card2
+          - card3
+          - card5
+          - addr1
+          - addr2
+          use_missing_pattern_features: true
+          missing_indicator_prefixes:
+          - card
+          - addr
+          - dist
+          - C
+          - D
+          - V
+          - M
+          - id_
+          use_frequency_encoding: true
+          frequency_encode_features:
+          - card1
+          - card2
+          - card3
+          - card5
+          - addr1
+          - addr2
+          - P_emaildomain
+          - R_emaildomain
+          - DeviceInfo
+          - id_30
+          - id_31
+          - id_33
+          use_amount_group_features: true
+          amount_groupby_features:
+          - ProductCD
+          - card1
+          - card4
+          - card6
+          - addr1
+          - P_emaildomain
+          email_domain_features:
+          - P_emaildomain
+          - R_emaildomain
+          interaction_features:
+          - - card1
+            - addr1
+          - - card1
+            - ProductCD
+          - - card4
+            - card6
+          - - P_emaildomain
+            - R_emaildomain
+          use_smote: false
+          smote_sampling_strategy: 0.5
+          smote_k_neighbors: 5
+          smote_random_state: 42
+          use_variance_threshold: true
+          use_feature_selection: true
+          feature_selection_k: 600
+          use_polynomial_features: false
+          polynomial_degree: 2
+        training:
+          scoring_metric: average_precision
+          cv_folds: 2
+          n_jobs: 2
+          grid_search_verbose: 2
+          threshold_tuning: true
+          threshold_metric: f1
+          threshold_grid:
+          - 0.05
+          - 0.1
+          - 0.15
+          - 0.2
+          - 0.25
+          - 0.3
+          - 0.35
+          - 0.4
+          - 0.45
+          - 0.5
+          - 0.55
+          - 0.6
+          - 0.7
+          - 0.8
+    outs:
+    - path: models/best_model.pkl
+      hash: md5
+      md5: 215c182990754558bc4b334d553fd8a7
+      size: 129385205
+    - path: models/preprocessing_pipeline.pkl
+      hash: md5
+      md5: 199cab24d6b9db4a0d4a2d8e14224ff0
+      size: 1136803
+    - path: reports/mlflow_experiment_results.csv
+      hash: md5
+      md5: 3540e79be9b4192d71ba9b18878979db
+      size: 1268
