@@ -1,13 +1,23 @@
 stages:
-  prepare:
-    cmd: ""
-    deps: []
-    outs: []
-  preprocess:
-    cmd: ""
-    deps: []
-    outs: []
-  featurize:
-    cmd: ""
-    deps: []
-    outs: []
+  train:
+    cmd: python src/training/train.py
+    deps:
+      - src/data/preprocessing.py
+      - src/training/train.py
+      - configs/params.yaml
+      - data/raw/train_transaction.csv
+      - data/raw/train_identity.csv
+    params:
+      - configs/params.yaml:
+          - data
+          - preprocessing
+          - mlflow
+          - training
+          - models
+          - artifacts
+    outs:
+      - models/preprocessing_pipeline.pkl
+      - models/best_model.pkl
+    metrics:
+      - reports/mlflow_experiment_results.csv:
+          cache: false

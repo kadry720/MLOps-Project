@@ -10,15 +10,16 @@ services:
       - mlflow
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
-    container_name: mlops-mlflow
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+    container_name: mlflow_server
     ports:
       - "5000:5000"
     volumes:
-      - ./mlruns:/mlflow/mlruns
+      - ./mlruns:/mlruns
+      - ./mlflow.db:/mlflow.db
     command: >
       mlflow server
+      --backend-store-uri sqlite:////mlflow.db
+      --default-artifact-root /mlruns
       --host 0.0.0.0
       --port 5000
-      --backend-store-uri sqlite:////mlflow/mlruns/mlflow.db
-      --default-artifact-root /mlflow/mlruns

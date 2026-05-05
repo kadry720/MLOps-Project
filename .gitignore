@@ -1,14 +1,22 @@
 data/*
 !data/*.dvc
 !data/processed/
+data/processed/*
 !data/processed/.gitkeep
 !data/splits/
+data/splits/*
 !data/splits/.gitkeep
 venv/
+.venv/
 .env
 mlruns/
+mlflow.db
+models/*.pkl
+reports/experiments/
 .coverage
 htmlcov/
+__pycache__/
+*.pyc
 notebooks/.ipynb_checkpoints/
 
 # IDE-specific files

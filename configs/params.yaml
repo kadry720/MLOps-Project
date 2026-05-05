@@ -1,0 +1,190 @@
+data:
+  raw_transaction_path: data/raw/train_transaction.csv
+  raw_identity_path: data/raw/train_identity.csv
+  processed_path: data/processed/cleaned_data.csv
+  train_path: data/splits/train.csv
+  test_path: data/splits/test.csv
+  target_column: isFraud
+  id_column: TransactionID
+  sample_size: 100000
+  test_size: 0.2
+  random_state: 42
+preprocessing:
+  numeric_imputer_strategy: median
+  categorical_imputer_strategy: constant
+  categorical_fill_value: missing
+  numeric_add_missing_indicator: true
+  categorical_add_missing_indicator: false
+  scaler: robust
+  encoder_handle_unknown: ignore
+  encoder_max_categories: 75
+  encoder_min_frequency: 5
+  use_feature_engineering: true
+  amount_column: TransactionAmt
+  log_transform_features: [TransactionAmt]
+  use_transaction_time_features: true
+  transaction_time_column: TransactionDT
+  categorical_like_numeric_features: [card1, card2, card3, card5, addr1, addr2]
+  use_missing_pattern_features: true
+  missing_indicator_prefixes: [card, addr, dist, C, D, V, M, id_]
+  use_frequency_encoding: true
+  frequency_encode_features: [card1, card2, card3, card5, addr1, addr2, P_emaildomain, R_emaildomain, DeviceInfo, id_30, id_31, id_33]
+  use_amount_group_features: true
+  amount_groupby_features: [ProductCD, card1, card4, card6, addr1, P_emaildomain]
+  use_target_mean_encoding: true
+  target_mean_smoothing: 30.0
+  target_mean_encode_features: [ProductCD, card1, card2, card3, card4, card5, card6, addr1, addr2, P_emaildomain, R_emaildomain, DeviceType, DeviceInfo, id_30, id_31, id_33]
+  target_mean_encode_interactions:
+    - [card1, addr1]
+    - [card1, ProductCD]
+    - [card4, card6]
+    - [P_emaildomain, R_emaildomain]
+  email_domain_features: [P_emaildomain, R_emaildomain]
+  interaction_features:
+    - [card1, addr1]
+    - [card1, ProductCD]
+    - [card4, card6]
+    - [P_emaildomain, R_emaildomain]
+  use_smote: false
+  smote_sampling_strategy: 0.5
+  smote_k_neighbors: 5
+  smote_random_state: 42
+  use_variance_threshold: true
+  use_feature_selection: true
+  feature_selection_k: 1500
+  use_polynomial_features: false
+  polynomial_degree: 2
+
+mlflow:
+  tracking_uri: http://localhost:5000
+  experiment_name: fraud-detection-experiments
+  registered_model_name: FraudDetectionBestModel
+  archive_existing_versions: true
+
+training:
+  scoring_metric: f1
+  cv_folds: 2
+  n_jobs: 2
+  grid_search_verbose: 2
+  threshold_tuning: true
+  threshold_metric: f1
+  threshold_grid: [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+
+models:
+  logistic_regression:
+    enabled: false
+    params:
+      max_iter: 1000
+      solver: liblinear
+      random_state: 42
+    grid:
+      classifier__C: [1.0]
+      classifier__penalty: ["l2"]
+      classifier__class_weight: [null, "balanced"]
+
+  random_forest:
+    enabled: true
+    params:
+      n_estimators: 400
+      class_weight: balanced_subsample
+      random_state: 42
+      n_jobs: 1
+    grid:
+      classifier__n_estimators: [400]
+      classifier__max_depth: [24, null]
+      classifier__min_samples_split: [2]
+      classifier__min_samples_leaf: [1, 2]
+      classifier__max_features: ["sqrt", 0.5]
+
+  gradient_boosting:
+    enabled: true
+    params:
+      random_state: 42
+    grid:
+      classifier__n_estimators: [250]
+      classifier__learning_rate: [0.03, 0.05]
+      classifier__max_depth: [3, 5]
+      classifier__subsample: [0.8, 1.0]
+
+  extra_trees:
+    enabled: true
+    params:
+      n_estimators: 400
+      class_weight: balanced_subsample
+      random_state: 42
+      n_jobs: 1
+    grid:
+      classifier__n_estimators: [400]
+      classifier__max_depth: [null]
+      classifier__min_samples_leaf: [1, 2]
+      classifier__max_features: ["sqrt", 0.5]
+
+  hist_gradient_boosting:
+    enabled: true
+    params:
+      class_weight: balanced
+      early_stopping: true
+      random_state: 42
+    grid:
+      classifier__max_iter: [300, 500]
+      classifier__learning_rate: [0.05, 0.08]
+      classifier__max_leaf_nodes: [31, 63]
+      classifier__l2_regularization: [0.0, 0.05]
+
+  balanced_random_forest:
+    enabled: true
+    params:
+      n_estimators: 400
+      sampling_strategy: all
+      replacement: true
+      bootstrap: false
+      random_state: 42
+      n_jobs: 1
+    grid:
+      classifier__n_estimators: [400]
+      classifier__max_depth: [24, null]
+      classifier__min_samples_leaf: [1, 2]
+      classifier__max_features: ["sqrt", 0.5]
+
+  easy_ensemble:
+    enabled: true
+    params:
+      n_estimators: 10
+      sampling_strategy: auto
+      random_state: 42
+      n_jobs: 1
+    grid:
+      classifier__n_estimators: [10, 20]
+      classifier__replacement: [false, true]
+
+  balanced_bagging:
+    enabled: true
+    params:
+      n_estimators: 30
+      sampling_strategy: auto
+      random_state: 42
+      n_jobs: 1
+    grid:
+      classifier__n_estimators: [30, 50]
+      classifier__max_samples: [0.7, 1.0]
+      classifier__replacement: [false, true]
+
+  rus_boost:
+    enabled: true
+    params:
+      n_estimators: 100
+      learning_rate: 0.5
+      sampling_strategy: auto
+      random_state: 42
+    grid:
+      classifier__n_estimators: [100, 200]
+      classifier__learning_rate: [0.1, 0.5, 1.0]
+
+artifacts:
+  preprocessing_pipeline_path: models/preprocessing_pipeline.pkl
+  best_model_path: models/best_model.pkl
+  results_path: reports/mlflow_experiment_results.csv
+  cv_results_dir: reports/cv_results
+  plots_dir: reports/plots
+  classification_reports_dir: reports/classification_reports
+  screenshots_dir: reports/screenshots
