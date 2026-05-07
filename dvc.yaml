@@ -1,12 +1,53 @@
 stages:
+  prepare:
+    cmd: conda run -n mlopsproject python src/data/preprocessing.py prepare
+    deps:
+      - src/data/preprocessing.py
+      - configs/params.yaml
+      - data/raw/train_transaction.csv
+      - data/raw/train_identity.csv
+    params:
+      - configs/params.yaml:
+          - data
+    outs:
+      - data/processed/cleaned_data.csv
+
+  preprocess:
+    cmd: conda run -n mlopsproject python src/data/preprocessing.py preprocess
+    deps:
+      - src/data/preprocessing.py
+      - configs/params.yaml
+      - data/processed/cleaned_data.csv
+    params:
+      - configs/params.yaml:
+          - data
+    outs:
+      - data/splits/train.csv
+      - data/splits/test.csv
+
+  featurize:
+    cmd: conda run -n mlopsproject python src/data/preprocessing.py featurize
+    deps:
+      - src/data/preprocessing.py
+      - configs/params.yaml
+      - data/splits/train.csv
+    params:
+      - configs/params.yaml:
+          - data
+          - preprocessing
+          - artifacts
+    outs:
+      - models/preprocessing_pipeline.pkl
+
   train:
-    cmd: python src/training/train.py
+    cmd: conda run -n mlopsproject python src/training/train.py
     deps:
       - src/data/preprocessing.py
       - src/training/train.py
       - configs/params.yaml
-      - data/raw/train_transaction.csv
-      - data/raw/train_identity.csv
+      - data/splits/train.csv
+      - data/splits/test.csv
+      - models/preprocessing_pipeline.pkl
     params:
       - configs/params.yaml:
           - data
@@ -16,7 +57,6 @@ stages:
           - models
           - artifacts
     outs:
-      - models/preprocessing_pipeline.pkl
       - models/best_model.pkl
     metrics:
       - reports/mlflow_experiment_results.csv:

@@ -60,12 +60,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.data.preprocessing import (  # noqa: E402
     build_full_preprocessing_pipeline,
-    fit_preprocessor,
     identify_column_types,
     load_config,
     load_raw_data,
     resolve_project_path,
-    save_preprocessor,
     split_features_target,
 )
 
@@ -210,6 +208,30 @@ def load_and_split_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.Series
         test_df.to_csv(test_output, index=False)
 
     return X_train, y_train, X_test, y_test
+
+
+def load_training_data(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
+    """Load prepared DVC split files, falling back to raw-data splitting for ad hoc runs."""
+
+    data_config = config["data"]
+    train_path = resolve_project_path(data_config["train_path"])
+    test_path = resolve_project_path(data_config["test_path"])
+    if train_path.exists() and test_path.exists():
+        train_data = pd.read_csv(train_path)
+        test_data = pd.read_csv(test_path)
+        X_train, y_train = split_features_target(
+            train_data,
+            data_config["target_column"],
+            data_config.get("id_column"),
+        )
+        X_test, y_test = split_features_target(
+            test_data,
+            data_config["target_column"],
+            data_config.get("id_column"),
+        )
+        return X_train, y_train, X_test, y_test
+
+    return load_and_split_data(config)
 
 
 def build_sampler(y_train: pd.Series, config: dict[str, Any]) -> SMOTE | None:
@@ -578,19 +600,8 @@ def main(config_path: str | Path = "configs/params.yaml") -> pd.DataFrame:
     if scoring is None:
         raise ValueError(f"Unsupported scoring metric configured: {scoring_metric}")
 
-    X_train, y_train, X_test, y_test = load_and_split_data(config)
+    X_train, y_train, X_test, y_test = load_training_data(config)
     numeric_features, categorical_features = identify_column_types(X_train, config)
-    standalone_preprocessor = build_full_preprocessing_pipeline(
-        numeric_features,
-        categorical_features,
-        config,
-    )
-    fit_preprocessor(standalone_preprocessor, X_train, y_train)
-    preprocessing_path = save_preprocessor(
-        standalone_preprocessor,
-        config["artifacts"]["preprocessing_pipeline_path"],
-    )
-    print(f"[train] Saved fitted preprocessing pipeline: {preprocessing_path}")
 
     sampler = build_sampler(y_train, config)
     cv = _create_cv(y_train, training_config["cv_folds"], config["data"]["random_state"])

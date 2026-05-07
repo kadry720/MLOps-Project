@@ -9,6 +9,7 @@ and must be applied only to training folds inside the model-training pipeline.
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 from typing import Any
 
@@ -593,26 +594,92 @@ def save_train_test_split(
     return train_data, test_data
 
 
-def main() -> None:
-    """Fit and save the standalone preprocessing artifact from raw data."""
+def prepare_dataset(config_path: str | Path = DEFAULT_CONFIG_PATH) -> Path:
+    """Merge raw DVC inputs into the configured processed dataset."""
 
-    config = load_config()
-    data_config = config["data"]
+    config = load_config(config_path)
     dataset = load_dataset(config)
-    X, y = split_features_target(dataset, data_config["target_column"], data_config["id_column"])
+    output_path = resolve_project_path(config["data"]["processed_path"])
+    print(f"[prepare] Saved processed dataset: {output_path} ({dataset.shape[0]} rows, {dataset.shape[1]} columns)")
+    return output_path
 
-    X_train, _, y_train, _ = train_test_split(
-        X,
-        y,
-        test_size=data_config["test_size"],
-        random_state=data_config["random_state"],
-        stratify=_stratify_target(y),
-    )
+
+def preprocess_dataset(config_path: str | Path = DEFAULT_CONFIG_PATH) -> tuple[Path, Path]:
+    """Create deterministic train/test split CSVs from the processed dataset."""
+
+    config = load_config(config_path)
+    data_config = config["data"]
+    processed_path = resolve_project_path(data_config["processed_path"])
+    if processed_path.exists():
+        dataset = pd.read_csv(processed_path)
+    else:
+        dataset = load_dataset(config)
+
+    X, y = split_features_target(dataset, data_config["target_column"], data_config["id_column"])
+    train_data, test_data = save_train_test_split(X, y, config)
+    train_path = resolve_project_path(data_config["train_path"])
+    test_path = resolve_project_path(data_config["test_path"])
+    print(f"[preprocess] Saved train split: {train_path} ({train_data.shape[0]} rows)")
+    print(f"[preprocess] Saved test split: {test_path} ({test_data.shape[0]} rows)")
+    return train_path, test_path
+
+
+def fit_preprocessing_artifact(config_path: str | Path = DEFAULT_CONFIG_PATH) -> Path:
+    """Fit and save the standalone preprocessing artifact from the train split."""
+
+    config = load_config(config_path)
+    data_config = config["data"]
+    train_path = resolve_project_path(data_config["train_path"])
+    if train_path.exists():
+        train_data = pd.read_csv(train_path)
+        X_train, y_train = split_features_target(
+            train_data,
+            data_config["target_column"],
+            data_config.get("id_column"),
+        )
+    else:
+        dataset = load_dataset(config)
+        X, y = split_features_target(dataset, data_config["target_column"], data_config["id_column"])
+        X_train, _, y_train, _ = train_test_split(
+            X,
+            y,
+            test_size=data_config["test_size"],
+            random_state=data_config["random_state"],
+            stratify=_stratify_target(y),
+        )
+
     numeric_features, categorical_features = identify_column_types(X_train, config)
     preprocessor = build_full_preprocessing_pipeline(numeric_features, categorical_features, config)
     fit_preprocessor(preprocessor, X_train, y_train)
     artifact_path = save_preprocessor(preprocessor, config["artifacts"]["preprocessing_pipeline_path"])
-    print(f"[preprocess] Saved fitted preprocessing pipeline: {artifact_path}")
+    print(f"[featurize] Saved fitted preprocessing pipeline: {artifact_path}")
+    return artifact_path
+
+
+def main(argv: list[str] | None = None) -> None:
+    """Run one or all preprocessing DVC stages."""
+
+    parser = argparse.ArgumentParser(description="Run preprocessing stages for the DVC pipeline.")
+    parser.add_argument(
+        "stage",
+        nargs="?",
+        choices=("all", "prepare", "preprocess", "featurize"),
+        default="all",
+        help="Stage to run. Defaults to the full preprocessing flow.",
+    )
+    parser.add_argument(
+        "--config",
+        default=str(DEFAULT_CONFIG_PATH),
+        help="Path to the YAML config file.",
+    )
+    args = parser.parse_args(argv)
+
+    if args.stage in ("all", "prepare"):
+        prepare_dataset(args.config)
+    if args.stage in ("all", "preprocess"):
+        preprocess_dataset(args.config)
+    if args.stage in ("all", "featurize"):
+        fit_preprocessing_artifact(args.config)
 
 
 # Backward-compatible aliases used by older project files/tests.
