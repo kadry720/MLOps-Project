@@ -1,12 +1,15 @@
 services:
   serving-api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mlops-serving-api:latest
     container_name: mlops-serving-api
-    command: uvicorn src.serving.app:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      PYTHONPATH: /app
     volumes:
       - ./configs:/app/configs:ro
       - ./models:/app/models:ro
@@ -21,7 +24,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+          "import json, urllib.request; data = json.load(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)); raise SystemExit(0 if data.get('status') == 'ok' else 1)",
         ]
       interval: 30s
       timeout: 5s
@@ -29,14 +32,18 @@ services:
       start_period: 30s
 
   gradio-ui:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mlops-serving-api:latest
     container_name: mlops-gradio-ui
-    command: python -m src.serving.gradio_app
+    command: ["python", "src/serving/gradio_app.py"]
     ports:
       - "7860:7860"
     environment:
-      MLFLOW_TRACKING_URI: http://mlflow:5000
       GRADIO_SERVER_NAME: 0.0.0.0
+      GRADIO_SERVER_PORT: 7860
+      PYTHONPATH: /app
     volumes:
       - ./configs:/app/configs:ro
       - ./models:/app/models:ro
@@ -51,7 +58,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860', timeout=5)",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/', timeout=5).read()",
         ]
       interval: 30s
       timeout: 5s
@@ -135,11 +142,11 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5).read()",
         ]
       interval: 30s
       timeout: 5s
-      retries: 3
+      retries: 5
       start_period: 30s
 
 volumes:

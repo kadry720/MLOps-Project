@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException, Response, status
@@ -82,4 +83,9 @@ def predict(request: PredictionRequest) -> PredictionResponse:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("src.serving.app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(
+        "src.serving.app:app",
+        host=os.getenv("SERVING_HOST", "127.0.0.1"),
+        port=int(os.getenv("SERVING_PORT", "8000")),
+        reload=os.getenv("SERVING_RELOAD", "true").lower() == "true",
+    )
