@@ -89,6 +89,41 @@ docker compose up mlflow
 
 The MLflow UI is available at `http://localhost:5000`.
 
+## Dockerized Serving
+
+The serving stack is containerized with Docker Compose. The API container expects
+the DVC-managed model and split artifacts to already exist on the host machine,
+then mounts them read-only into the container.
+
+Prerequisite:
+
+```bash
+python -m dvc pull
+```
+
+Confirm the required artifacts are present:
+
+```bash
+test -f models/best_model.pkl
+test -f data/splits/test.csv
+```
+
+Start the serving stack:
+
+```bash
+docker compose up --build
+```
+
+Services:
+
+- FastAPI serving API: `http://localhost:8000`
+- FastAPI health endpoint: `http://localhost:8000/health`
+- Gradio prediction UI: `http://localhost:7860`
+- MLflow tracking server: `http://localhost:5000`
+
+Inside Docker Compose, services communicate through Docker DNS names, for
+example `http://mlflow:5000`, rather than `localhost`.
+
 ## Local Commands
 
 Run the CI-safe validation gate:

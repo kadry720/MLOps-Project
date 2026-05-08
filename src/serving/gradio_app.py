@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -166,4 +167,7 @@ def create_interface() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    create_interface().launch(server_name="127.0.0.1", server_port=7860)
+    create_interface().launch(
+        server_name=os.getenv("GRADIO_SERVER_NAME", "127.0.0.1"),
+        server_port=int(os.getenv("GRADIO_SERVER_PORT", "7860")),
+    )

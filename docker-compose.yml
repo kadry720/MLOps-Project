@@ -1,25 +1,95 @@
 services:
-  api:
-    build: .
-    container_name: mlops-fastapi
+  serving-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mlops-serving-api:latest
+    container_name: mlops-serving-api
     ports:
       - "8000:8000"
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      PYTHONPATH: /app
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./models:/app/models:ro
+      - ./data/splits:/app/data/splits:ro
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import json, urllib.request; data = json.load(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)); raise SystemExit(0 if data.get('status') == 'ok' else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  gradio-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mlops-serving-api:latest
+    container_name: mlops-gradio-ui
+    command: ["python", "src/serving/gradio_app.py"]
+    ports:
+      - "7860:7860"
+    environment:
+      GRADIO_SERVER_NAME: 0.0.0.0
+      GRADIO_SERVER_PORT: 7860
+      PYTHONPATH: /app
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./models:/app/models:ro
+      - ./data/splits:/app/data/splits:ro
+    depends_on:
+      serving-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860/', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.12.1
-    container_name: mlflow_server
+    container_name: mlops-mlflow
     ports:
       - "5000:5000"
     volumes:
-      - ./mlruns:/mlruns
-      - ./mlflow.db:/mlflow.db
+      - mlflow-runs:/mlruns
+      - mlflow-db:/mlflow-db
     command: >
       mlflow server
-      --backend-store-uri sqlite:////mlflow.db
+      --backend-store-uri sqlite:////mlflow-db/mlflow.db
       --default-artifact-root /mlruns
       --host 0.0.0.0
       --port 5000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5).read()",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mlflow-runs:
+  mlflow-db:
