@@ -1,7 +1,7 @@
 """Prefect orchestration for the MLOps training pipeline.
 
 The flow maps the existing DVC stages into a DAG:
-raw data -> prepare -> preprocess -> featurize -> train -> optional registry.
+validate data -> prepare -> preprocess -> featurize -> train -> optional registry.
 Each task delegates to the same scripts tracked by ``dvc.yaml`` so orchestration
 does not create a second implementation of the pipeline.
 """
@@ -16,7 +16,6 @@ from typing import Sequence
 
 from prefect import flow, get_run_logger, task
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -26,6 +25,21 @@ def _run_command(command: Sequence[str]) -> None:
     logger = get_run_logger()
     logger.info("Running command: %s", " ".join(command))
     subprocess.run(command, cwd=PROJECT_ROOT, check=True)
+
+
+@task(name="validate-data")
+def validate_data() -> str:
+    """Run schema, quality, and drift validation before pipeline execution."""
+
+    _run_command(
+        [
+            sys.executable,
+            "src/pipeline/validate_pipeline.py",
+            "--config",
+            "configs/validation.yaml",
+        ]
+    )
+    return "reports/validation/validation_summary.json"
 
 
 @task(name="dvc-prepare")
@@ -77,7 +91,8 @@ def mlops_training_pipeline(run_training: bool = True, register_model: bool = Fa
         register_model: When true, register/promote the best model after training.
     """
 
-    prepared = prepare_data.submit()
+    validated = validate_data.submit()
+    prepared = prepare_data.submit(wait_for=[validated])
     preprocessed = preprocess_data.submit(wait_for=[prepared])
     featurized = featurize_data.submit(wait_for=[preprocessed])
 
