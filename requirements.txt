@@ -17,6 +17,10 @@ evidently==0.4.30
 fastapi==0.111.0
 uvicorn==0.28.1
 pydantic==2.7.4
+gradio==4.44.1
+huggingface-hub==0.25.2
+click==8.1.8
+typer==0.12.5
 requests==2.32.3
 httpx==0.27.0
 
