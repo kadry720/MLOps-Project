@@ -1,25 +1,149 @@
 services:
-  api:
+  serving-api:
     build: .
-    container_name: mlops-fastapi
+    container_name: mlops-serving-api
+    command: uvicorn src.serving.app:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./models:/app/models:ro
+      - ./data/splits:/app/data/splits:ro
+      - ./reports:/app/reports:ro
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  gradio-ui:
+    build: .
+    container_name: mlops-gradio-ui
+    command: python -m src.serving.gradio_app
+    ports:
+      - "7860:7860"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      GRADIO_SERVER_NAME: 0.0.0.0
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./models:/app/models:ro
+      - ./data/splits:/app/data/splits:ro
+      - ./reports:/app/reports:ro
+    depends_on:
+      serving-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7860', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: mlops-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      serving-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://127.0.0.1:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: mlops-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning-dashboard-files:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider -q http://127.0.0.1:3000/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.12.1
-    container_name: mlflow_server
+    container_name: mlops-mlflow
     ports:
       - "5000:5000"
     volumes:
-      - ./mlruns:/mlruns
-      - ./mlflow.db:/mlflow.db
+      - mlflow-runs:/mlruns
+      - mlflow-db:/mlflow-db
     command: >
       mlflow server
-      --backend-store-uri sqlite:////mlflow.db
+      --backend-store-uri sqlite:////mlflow-db/mlflow.db
       --default-artifact-root /mlruns
       --host 0.0.0.0
       --port 5000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mlflow-runs:
+  mlflow-db:
+  prometheus-data:
+  grafana-data:

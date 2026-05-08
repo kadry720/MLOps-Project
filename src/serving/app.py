@@ -4,8 +4,16 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Response, status
 
+from src.serving.metrics import (
+    PREDICTION_ERRORS,
+    metrics_response,
+    observe_http_request,
+    record_prediction,
+    update_evaluation_metrics,
+    update_health_metrics,
+)
 from src.serving.model_service import PredictionService
 from src.serving.schemas import ErrorResponse, HealthResponse, PredictionRequest, PredictionResponse
 
@@ -21,11 +29,24 @@ def get_model_service() -> PredictionService:
     return PredictionService()
 
 
+app.middleware("http")(observe_http_request)
+
+
 @app.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
     """Return model and reference-data availability."""
 
-    return HealthResponse(**get_model_service().health())
+    health_result = get_model_service().health()
+    update_health_metrics(health_result)
+    update_evaluation_metrics(get_model_service().evaluation_results_path)
+    return HealthResponse(**health_result)
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics() -> Response:
+    """Expose Prometheus metrics."""
+
+    return metrics_response()
 
 
 @app.post(
@@ -46,12 +67,15 @@ def predict(request: PredictionRequest) -> PredictionResponse:
             confidence_level=request.confidence_level,
         )
     except ValueError as exc:
+        PREDICTION_ERRORS.labels(error_type=type(exc).__name__).inc()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except FileNotFoundError as exc:
+        PREDICTION_ERRORS.labels(error_type=type(exc).__name__).inc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(exc),
         ) from exc
+    record_prediction(result)
     return PredictionResponse(**result)
 
 

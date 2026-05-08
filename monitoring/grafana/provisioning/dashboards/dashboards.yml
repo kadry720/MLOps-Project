@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: Fraud Serving Dashboards
+    folder: MLOps
+    type: file
+    disableDeletion: true
+    editable: true
+    options:
+      path: /etc/grafana/provisioning-dashboard-files
