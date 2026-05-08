@@ -1,0 +1,126 @@
+validation:
+  dataset_name: ieee_cis_fraud_transactions
+  input_data_path: tests/data/sample_fraud_transactions.csv
+  reference_data_path: tests/data/reference_fraud_transactions.csv
+  baseline_statistics_path: data/reference/validation_baseline.json
+  report_dir: reports/validation
+  log_dir: logs
+  log_level: INFO
+  log_file: data_validation.log
+  json_log_file: data_validation.jsonl
+  log_max_bytes: 2000000
+  log_backup_count: 5
+  log_enable_console: true
+  target_column: isFraud
+  id_column: TransactionID
+  create_baseline_if_missing: true
+  fail_on_warnings: false
+
+schema:
+  name: ieee_fraud_schema
+  strict: false
+  coerce: true
+  ordered: false
+  required_columns:
+    - name: TransactionID
+      dtype: int
+      nullable: false
+    - name: isFraud
+      dtype: int
+      nullable: false
+    - name: TransactionDT
+      dtype: float
+      nullable: false
+    - name: TransactionAmt
+      dtype: float
+      nullable: false
+    - name: ProductCD
+      dtype: string
+      nullable: false
+    - name: card1
+      dtype: float
+      nullable: false
+    - name: card4
+      dtype: string
+      nullable: true
+    - name: card6
+      dtype: string
+      nullable: true
+    - name: P_emaildomain
+      dtype: string
+      nullable: true
+
+  numeric_ranges:
+    TransactionID:
+      min: 1
+      max: 1000000000
+    isFraud:
+      min: 0
+      max: 1
+    TransactionDT:
+      min: 0
+      max: 100000000
+    TransactionAmt:
+      min: 0.01
+      max: 50000.0
+    card1:
+      min: 1000
+      max: 20000
+
+  categorical_allowed_values:
+    ProductCD: [W, C, R, H, S]
+    card4: [visa, mastercard, american express, discover]
+    card6: [credit, debit, charge card, debit or credit]
+    P_emaildomain: [gmail.com, yahoo.com, hotmail.com, anonymous.com, aol.com, comcast.net, outlook.com]
+
+  null_thresholds:
+    TransactionID: 0.0
+    isFraud: 0.0
+    TransactionDT: 0.0
+    TransactionAmt: 0.0
+    ProductCD: 0.0
+    card1: 0.0
+    card4: 0.20
+    card6: 0.20
+    P_emaildomain: 0.25
+
+quality:
+  duplicates:
+    subset: [TransactionID]
+    max_fraction: 0.0
+  unexpected_categories:
+    fail: true
+  outliers:
+    enabled: true
+    fail: false
+    columns: [TransactionAmt, TransactionDT, card1]
+    robust_zscore_threshold: 8.0
+    max_fraction: 0.05
+  class_imbalance:
+    target_column: isFraud
+    min_minority_ratio: 0.02
+  freshness:
+    enabled: true
+    required: false
+    timestamp_column: ingestion_timestamp
+    reference_time: "2026-05-07T00:00:00Z"
+    max_age_days: 10
+    max_invalid_fraction: 0.0
+    max_future_days: 1
+    max_future_fraction: 0.0
+    fail_on_stale: true
+
+drift:
+  enabled: true
+  fail_on_distribution_drift: false
+  min_samples: 20
+  numeric_columns: [TransactionAmt, TransactionDT, card1]
+  categorical_columns: [ProductCD, card4, card6, P_emaildomain]
+  ks_pvalue_threshold: 0.001
+  ks_statistic_threshold: 0.25
+  categorical_js_threshold: 0.20
+  max_mean_shift_std: 3.0
+  schema_drift:
+    track: required
+    fail_on_missing_columns: true
+    fail_on_new_columns: false

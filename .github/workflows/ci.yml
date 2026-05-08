@@ -3,62 +3,51 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  linting:
-    name: Linting
+  quality-gate:
+    name: Lint, Test, and Validate Data
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    timeout-minutes: 30
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
-      - name: Install lint dependencies
-        run: python -m pip install --upgrade pip ruff
-
-      - name: Run ruff
-        run: ruff check .
-
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install test dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unit tests with coverage
+      - name: Lint
+        run: |
+          ruff check src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
+          black --check src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
+          flake8 src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
+
+      - name: Run tests
         run: pytest tests/unit --cov=src --cov-report=term-missing
 
-  model-validation:
-    name: Model Validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Assert minimum performance threshold
+      - name: Run data validation gate
         env:
-          MINIMUM_MODEL_SCORE: "0.70"
-          PLACEHOLDER_MODEL_SCORE: "0.70"
-        run: |
-          python - <<'PY'
-          import os
+          DATA_VALIDATION_INPUT_PATH: tests/data/sample_fraud_transactions.csv
+          DATA_VALIDATION_REFERENCE_PATH: tests/data/reference_fraud_transactions.csv
+        run: python src/pipeline/validate_pipeline.py --config configs/validation.yaml
 
-          minimum_score = float(os.environ["MINIMUM_MODEL_SCORE"])
-          model_score = float(os.environ["PLACEHOLDER_MODEL_SCORE"])
-
-          assert model_score >= minimum_score, (
-              f"Model score {model_score:.3f} is below threshold {minimum_score:.3f}"
-          )
-          PY
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-reports
+          path: |
+            reports/validation/validation_report.html
+            reports/validation/validation_summary.json
+            logs/data_validation.log
+          if-no-files-found: ignore

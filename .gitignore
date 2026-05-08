@@ -6,6 +6,10 @@ data/processed/*
 !data/splits/
 data/splits/*
 !data/splits/.gitkeep
+!data/reference/
+data/reference/*
+!data/reference/.gitkeep
+!data/reference/validation_baseline.json
 venv/
 .venv/
 .env
@@ -13,6 +17,10 @@ mlruns/
 mlflow.db
 models/*.pkl
 reports/experiments/
+reports/validation/*
+!reports/validation/.gitkeep
+logs/*
+!logs/.gitkeep
 .coverage
 htmlcov/
 __pycache__/

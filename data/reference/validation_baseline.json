@@ -1,0 +1,121 @@
+{
+  "categorical": {
+    "P_emaildomain": {
+      "count": 40,
+      "distribution": {
+        "anonymous.com": 0.1,
+        "aol.com": 0.125,
+        "comcast.net": 0.125,
+        "gmail.com": 0.25,
+        "hotmail.com": 0.125,
+        "outlook.com": 0.1,
+        "yahoo.com": 0.175
+      },
+      "missing_fraction": 0.0,
+      "unique_count": 7
+    },
+    "ProductCD": {
+      "count": 40,
+      "distribution": {
+        "C": 0.25,
+        "H": 0.125,
+        "R": 0.125,
+        "S": 0.1,
+        "W": 0.4
+      },
+      "missing_fraction": 0.0,
+      "unique_count": 5
+    },
+    "card4": {
+      "count": 40,
+      "distribution": {
+        "american express": 0.125,
+        "discover": 0.125,
+        "mastercard": 0.3,
+        "visa": 0.45
+      },
+      "missing_fraction": 0.0,
+      "unique_count": 4
+    },
+    "card6": {
+      "count": 40,
+      "distribution": {
+        "credit": 0.45,
+        "debit": 0.55
+      },
+      "missing_fraction": 0.0,
+      "unique_count": 2
+    }
+  },
+  "columns": {
+    "P_emaildomain": "object",
+    "ProductCD": "object",
+    "TransactionAmt": "float64",
+    "TransactionDT": "int64",
+    "TransactionID": "int64",
+    "card1": "int64",
+    "card4": "object",
+    "card6": "object",
+    "ingestion_timestamp": "object",
+    "isFraud": "int64"
+  },
+  "dataset_name": "ieee_cis_fraud_transactions",
+  "generated_at": "2026-05-07T02:15:53.087043+00:00",
+  "numeric": {
+    "TransactionAmt": {
+      "count": 40,
+      "max": 605.0,
+      "mean": 131.02425,
+      "min": 12.0,
+      "missing_fraction": 0.0,
+      "quantiles": {
+        "0.01": 12.9711,
+        "0.05": 18.6795,
+        "0.5": 69.875,
+        "0.95": 482.0,
+        "0.99": 571.85
+      },
+      "std": 151.04752328
+    },
+    "TransactionDT": {
+      "count": 40,
+      "max": 139450.0,
+      "mean": 111613.925,
+      "min": 86400.0,
+      "missing_fraction": 0.0,
+      "quantiles": {
+        "0.01": 86715.9,
+        "0.05": 88060.25,
+        "0.5": 111067.5,
+        "0.95": 136670.05,
+        "0.99": 138884.89
+      },
+      "std": 16026.88162649
+    },
+    "card1": {
+      "count": 40,
+      "max": 18333.0,
+      "mean": 9778.725,
+      "min": 1675.0,
+      "missing_fraction": 0.0,
+      "quantiles": {
+        "0.01": 2096.2,
+        "0.05": 2800.6,
+        "0.5": 9299.5,
+        "0.95": 17235.2,
+        "0.99": 18254.61
+      },
+      "std": 4981.88407125
+    }
+  },
+  "row_count": 40,
+  "target": {
+    "count": 40,
+    "distribution": {
+      "0": 0.75,
+      "1": 0.25
+    },
+    "missing_fraction": 0.0,
+    "unique_count": 2
+  }
+}
