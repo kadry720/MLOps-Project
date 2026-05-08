@@ -29,11 +29,15 @@ docker compose up -d mlflow
 
 ## DAG Mapping
 
-The Prefect flow maps the same stages defined in `dvc.yaml`:
+The Prefect flow maps the same stages defined in `dvc.yaml` and adds a model
+evaluation gate before registry promotion:
 
 ```text
-prepare -> preprocess -> featurize -> train -> register model
+validate data -> prepare -> preprocess -> featurize -> train -> evaluate -> register model
 ```
+
+The Prefect task names are `validate_data`, `prepare`, `preprocess`,
+`featurize`, `train`, `evaluate`, and `register_model`.
 
 The tasks delegate to DVC commands so the DAG uses the existing reproducible
 pipeline rather than a separate implementation:
@@ -43,6 +47,7 @@ python -m dvc repro prepare
 python -m dvc repro preprocess
 python -m dvc repro featurize
 python -m dvc repro train
+python src/evaluation/validate_model.py --config configs/params.yaml --validation-config configs/validation.yaml --allow-metrics-fallback
 ```
 
 ## Commands

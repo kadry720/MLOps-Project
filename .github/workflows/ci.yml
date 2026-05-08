@@ -28,18 +28,21 @@ jobs:
 
       - name: Lint
         run: |
-          ruff check src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
-          black --check src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
-          flake8 src/validation src/utils src/pipeline tests/unit/test_data_validation_pipeline.py
+          ruff check src/validation src/utils src/pipeline src/evaluation src/orchestration tests/unit/test_data_validation_pipeline.py tests/unit/test_model_validation.py tests/unit/test_model_service.py tests/unit/test_preprocessing_unit.py
+          black --check src/validation src/utils src/pipeline src/evaluation src/orchestration tests/unit/test_data_validation_pipeline.py tests/unit/test_model_validation.py tests/unit/test_model_service.py tests/unit/test_preprocessing_unit.py
+          flake8 src/validation src/utils src/pipeline src/evaluation src/orchestration tests/unit/test_data_validation_pipeline.py tests/unit/test_model_validation.py tests/unit/test_model_service.py tests/unit/test_preprocessing_unit.py
 
       - name: Run tests
-        run: pytest tests/unit --cov=src --cov-report=term-missing
+        run: pytest tests/unit --cov=src --cov-report=term-missing --cov-fail-under=70
 
       - name: Run data validation gate
         env:
           DATA_VALIDATION_INPUT_PATH: tests/data/sample_fraud_transactions.csv
           DATA_VALIDATION_REFERENCE_PATH: tests/data/reference_fraud_transactions.csv
         run: python src/pipeline/validate_pipeline.py --config configs/validation.yaml
+
+      - name: Run model validation gate
+        run: python src/evaluation/validate_model.py --config configs/params.yaml --validation-config configs/validation.yaml --allow-metrics-fallback
 
       - name: Upload validation reports
         if: always()

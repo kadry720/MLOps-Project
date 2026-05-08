@@ -3,7 +3,6 @@ stages:
     cmd: conda run -n mlopsproject python src/data/preprocessing.py prepare
     deps:
       - src/data/preprocessing.py
-      - configs/params.yaml
       - data/raw/train_transaction.csv
       - data/raw/train_identity.csv
     params:
@@ -16,7 +15,6 @@ stages:
     cmd: conda run -n mlopsproject python src/data/preprocessing.py preprocess
     deps:
       - src/data/preprocessing.py
-      - configs/params.yaml
       - data/processed/cleaned_data.csv
     params:
       - configs/params.yaml:
@@ -29,7 +27,6 @@ stages:
     cmd: conda run -n mlopsproject python src/data/preprocessing.py featurize
     deps:
       - src/data/preprocessing.py
-      - configs/params.yaml
       - data/splits/train.csv
     params:
       - configs/params.yaml:
@@ -44,7 +41,6 @@ stages:
     deps:
       - src/data/preprocessing.py
       - src/training/train.py
-      - configs/params.yaml
       - data/splits/train.csv
       - data/splits/test.csv
       - models/preprocessing_pipeline.pkl

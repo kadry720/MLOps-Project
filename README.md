@@ -5,6 +5,26 @@ contains reproducible preprocessing, model training with MLflow, and a CI/CD dat
 validation gate that blocks training or deployment when schema and quality
 expectations are violated.
 
+## Quickstart
+
+From a clean clone with Docker running, a reviewer can start the serving app and
+monitoring stack in three commands:
+
+```bash
+python -m pip install -r requirements.txt
+python -m dvc pull
+docker compose up --build
+```
+
+After the services are healthy:
+
+- FastAPI health: `http://localhost:8000/health`
+- FastAPI prediction docs: `http://localhost:8000/docs`
+- Gradio prediction UI: `http://localhost:7860`
+- MLflow: `http://localhost:5000`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000` with username `admin` and password `admin`
+
 ## Architecture Overview
 
 ```text
