@@ -45,7 +45,7 @@ preprocessing:
     - [card1, ProductCD]
     - [card4, card6]
     - [P_emaildomain, R_emaildomain]
-  use_smote: true
+  use_smote: false
   smote_sampling_strategy: 0.5
   smote_k_neighbors: 5
   smote_random_state: 42

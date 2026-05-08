@@ -1,28 +1,32 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python src/training/train.py
+    cmd: conda run -n mlopsproject python src/training/train.py
     deps:
     - path: configs/params.yaml
       hash: md5
       md5: ed4b82c429225a0b168dc18bdf6fb750
       size: 5721
-    - path: data/raw/train_identity.csv
+    - path: data/splits/test.csv
       hash: md5
-      md5: 8487db5001c8bad139f3318d5d3db416
-      size: 26529680
-    - path: data/raw/train_transaction.csv
+      md5: 22da507e48409eada8f8660608c6a953
+      size: 25321224
+    - path: data/splits/train.csv
       hash: md5
-      md5: 58b4038d8715f5e11007b826bef00ce7
-      size: 683351067
+      md5: 7f168fa71004e03ffe2c1c7fe7385c8f
+      size: 101567476
+    - path: models/preprocessing_pipeline.pkl
+      hash: md5
+      md5: b7bac6efb0bf32b5b675671abcaf9a24
+      size: 2421739
     - path: src/data/preprocessing.py
       hash: md5
-      md5: 5d3990822990494ab5dfda792c36b829
-      size: 26726
+      md5: f7145a2934cad0e6ef249fe0dbf6445c
+      size: 29412
     - path: src/training/train.py
       hash: md5
-      md5: f1c349024a78a0171d4d12b0b915da69
-      size: 27768
+      md5: 0f99e09bf485d570c3705ddc018223fa
+      size: 28187
     params:
       configs/params.yaml:
         artifacts:
@@ -341,21 +345,17 @@ stages:
       hash: md5
       md5: 462decff012321f33f7362a7909b76f9
       size: 3701762
-    - path: models/preprocessing_pipeline.pkl
-      hash: md5
-      md5: 5cbf2b847179b8c4253d9a1a12bb043a
-      size: 2421755
     - path: reports/mlflow_experiment_results.csv
       hash: md5
-      md5: b1067acb3b4987e5378cddd223ed070a
-      size: 2625
+      md5: 25100918f43bb4c5641dca9037ece4f9
+      size: 2627
   prepare:
     cmd: conda run -n mlopsproject python src/data/preprocessing.py prepare
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: dec901ed0e55f61de3d3b05b0fb15477
-      size: 5720
+      md5: ed4b82c429225a0b168dc18bdf6fb750
+      size: 5721
     - path: data/raw/train_identity.csv
       hash: md5
       md5: 8487db5001c8bad139f3318d5d3db416
@@ -391,8 +391,8 @@ stages:
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: dec901ed0e55f61de3d3b05b0fb15477
-      size: 5720
+      md5: ed4b82c429225a0b168dc18bdf6fb750
+      size: 5721
     - path: data/processed/cleaned_data.csv
       hash: md5
       md5: 431a8700f99a88a26e996d03f731afb9
@@ -428,8 +428,8 @@ stages:
     deps:
     - path: configs/params.yaml
       hash: md5
-      md5: dec901ed0e55f61de3d3b05b0fb15477
-      size: 5720
+      md5: ed4b82c429225a0b168dc18bdf6fb750
+      size: 5721
     - path: data/splits/train.csv
       hash: md5
       md5: 7f168fa71004e03ffe2c1c7fe7385c8f
@@ -554,7 +554,7 @@ stages:
             - card6
           - - P_emaildomain
             - R_emaildomain
-          use_smote: true
+          use_smote: false
           smote_sampling_strategy: 0.5
           smote_k_neighbors: 5
           smote_random_state: 42
@@ -566,5 +566,5 @@ stages:
     outs:
     - path: models/preprocessing_pipeline.pkl
       hash: md5
-      md5: 1ad49c5616215f6de2f31339515b327c
+      md5: b7bac6efb0bf32b5b675671abcaf9a24
       size: 2421739
