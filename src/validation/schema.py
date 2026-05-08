@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import pandas as pd
-import pandera.pandas as pa
+import pandera as pa
 from pandera.errors import SchemaError, SchemaErrors
 
 from src.validation.types import ValidationIssue
