@@ -107,6 +107,26 @@ prediction errors, fraud probability, model confidence, feature completeness,
 serving artifact status, and saved best-model evaluation metrics from
 `reports/mlflow_experiment_results.csv`.
 
+Generate the required Evidently monitoring reports:
+
+```bash
+python monitoring/run_monitoring.py
+```
+
+This writes:
+
+- `monitoring/evidently_reports/baseline_report.html`
+- `monitoring/evidently_reports/drift_report.html`
+- `monitoring/evidently_reports/monitoring_summary.json`
+- `logs/monitoring.log`
+
+The baseline report compares a reference slice against a clean held-out slice.
+The drift report compares the same reference slice against a deterministic
+perturbed slice with drift injected into `TransactionAmt`, `TransactionDT`,
+`card1`, `ProductCD`, `P_emaildomain`, and `card4`. If
+`models/best_model.pkl` is present, the reports also include classification
+performance metrics.
+
 ## Dockerized Serving
 
 The serving stack is containerized with Docker Compose. The API container expects

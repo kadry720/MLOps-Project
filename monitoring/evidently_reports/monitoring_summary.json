@@ -1,0 +1,71 @@
+{
+  "baseline": {
+    "dataset_drift": false,
+    "drifted_features": [],
+    "number_of_columns": 9,
+    "number_of_drifted_columns": 0,
+    "share_of_drifted_columns": 0.0
+  },
+  "baseline_report": "monitoring/evidently_reports/baseline_report.html",
+  "drift": {
+    "dataset_drift": true,
+    "drifted_features": [
+      {
+        "feature": "TransactionAmt",
+        "score": 1.8148744299408948,
+        "stattest": "Wasserstein distance (normed)",
+        "threshold": 0.1
+      },
+      {
+        "feature": "TransactionDT",
+        "score": 2.1098210080964765,
+        "stattest": "Wasserstein distance (normed)",
+        "threshold": 0.1
+      },
+      {
+        "feature": "card1",
+        "score": 1.0079254400592128,
+        "stattest": "Wasserstein distance (normed)",
+        "threshold": 0.1
+      },
+      {
+        "feature": "ProductCD",
+        "score": 0.49975297029579163,
+        "stattest": "Jensen-Shannon distance",
+        "threshold": 0.1
+      },
+      {
+        "feature": "card4",
+        "score": 0.23113975012205615,
+        "stattest": "Jensen-Shannon distance",
+        "threshold": 0.1
+      },
+      {
+        "feature": "P_emaildomain",
+        "score": 0.6453806602908836,
+        "stattest": "Jensen-Shannon distance",
+        "threshold": 0.1
+      }
+    ],
+    "number_of_columns": 9,
+    "number_of_drifted_columns": 6,
+    "share_of_drifted_columns": 0.6666666666666666
+  },
+  "drift_report": "monitoring/evidently_reports/drift_report.html",
+  "injected_drift_features": [
+    "TransactionAmt",
+    "TransactionDT",
+    "card1",
+    "ProductCD",
+    "P_emaildomain",
+    "card4"
+  ],
+  "model_path": "models/best_model.pkl",
+  "model_performance_included": true,
+  "row_counts": {
+    "clean_current": 5000,
+    "drifted_current": 5000,
+    "reference": 5000
+  },
+  "source_data": "data/splits/test.csv"
+}

@@ -188,3 +188,26 @@ artifacts:
   plots_dir: reports/plots
   classification_reports_dir: reports/classification_reports
   screenshots_dir: reports/screenshots
+
+monitoring:
+  source_data_path: data/splits/test.csv
+  model_path: models/best_model.pkl
+  output_dir: monitoring/evidently_reports
+  baseline_report_name: baseline_report.html
+  drift_report_name: drift_report.html
+  summary_name: monitoring_summary.json
+  log_path: logs/monitoring.log
+  sample_size: 5000
+  random_state: 42
+  max_report_features: 20
+  drift_alert_share_threshold: 0.20
+  drifted_numeric_columns: [TransactionAmt, TransactionDT, card1]
+  drifted_categorical_columns: [ProductCD, P_emaildomain, card4]
+  amount_drift_multiplier: 4.0
+  transaction_dt_shift: 1209600
+  card1_shift: 5000
+  categorical_drift_fraction: 0.75
+  categorical_replacements:
+    ProductCD: C
+    P_emaildomain: drifted.example.com
+    card4: visa
