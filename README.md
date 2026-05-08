@@ -81,13 +81,31 @@ Pull DVC artifacts when running the full fraud pipeline:
 python -m dvc pull
 ```
 
-Start MLflow for training experiments:
+Start the local serving and monitoring stack:
 
 ```bash
-docker compose up mlflow
+docker compose up serving-api gradio-ui prometheus grafana mlflow
 ```
 
-The MLflow UI is available at `http://localhost:5000`.
+Services:
+
+- FastAPI serving API: `http://localhost:8000`
+- FastAPI health endpoint: `http://localhost:8000/health`
+- Prometheus metrics endpoint: `http://localhost:8000/metrics`
+- Gradio prediction UI: `http://localhost:7860`
+- MLflow tracking server: `http://localhost:5000`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000` with username `admin` and password `admin`
+
+Inside Docker Compose, services communicate through Docker DNS names, for
+example `http://mlflow:5000`, rather than `localhost`.
+
+The Grafana dashboard is provisioned automatically from
+`monitoring/grafana/dashboards/fraud-serving-dashboard.json`. It tracks API
+availability, health, request rate, endpoint latency, prediction volume,
+prediction errors, fraud probability, model confidence, feature completeness,
+serving artifact status, and saved best-model evaluation metrics from
+`reports/mlflow_experiment_results.csv`.
 
 ## Dockerized Serving
 

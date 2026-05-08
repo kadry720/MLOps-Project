@@ -6,6 +6,8 @@ import src.serving.app as serving_app
 
 
 class DummyPredictionService:
+    evaluation_results_path = "missing-results.csv"
+
     def health(self) -> dict:
         return {
             "status": "ok",
@@ -77,3 +79,24 @@ def test_predict_endpoint_rejects_empty_feature_payload():
     response = client.post("/predict", json={"features": {}})
 
     assert response.status_code == 422
+
+
+def test_metrics_endpoint_exposes_prometheus_metrics(monkeypatch):
+    monkeypatch.setattr(serving_app, "get_model_service", lambda: DummyPredictionService())
+    client = TestClient(serving_app.app)
+
+    client.get("/health")
+    client.post(
+        "/predict",
+        json={
+            "features": {"TransactionAmt": 25.0, "ProductCD": "H", "card1": 7585},
+            "confidence_level": 0.95,
+        },
+    )
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "text/plain" in response.headers["content-type"]
+    assert "fraud_serving_health_status" in response.text
+    assert "fraud_serving_predictions_total" in response.text
+    assert "fraud_serving_model_evaluation_available" in response.text

@@ -74,6 +74,7 @@ class PredictionService:
         self.target_column = data_config["target_column"]
         self.id_column = data_config.get("id_column")
         self.model_path = resolve_project_path(model_path or artifact_config["best_model_path"])
+        self.evaluation_results_path = resolve_project_path(artifact_config["results_path"])
         self.reference_data_path = resolve_project_path(
             reference_data_path or data_config["test_path"]
         )

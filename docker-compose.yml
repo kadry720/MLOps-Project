@@ -14,6 +14,7 @@ services:
       - ./configs:/app/configs:ro
       - ./models:/app/models:ro
       - ./data/splits:/app/data/splits:ro
+      - ./reports:/app/reports:ro
     depends_on:
       mlflow:
         condition: service_healthy
@@ -47,6 +48,7 @@ services:
       - ./configs:/app/configs:ro
       - ./models:/app/models:ro
       - ./data/splits:/app/data/splits:ro
+      - ./reports:/app/reports:ro
     depends_on:
       serving-api:
         condition: service_healthy
@@ -61,6 +63,63 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: mlops-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      serving-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://127.0.0.1:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: mlops-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning-dashboard-files:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider -q http://127.0.0.1:3000/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
       start_period: 30s
 
   mlflow:
@@ -93,3 +152,5 @@ services:
 volumes:
   mlflow-runs:
   mlflow-db:
+  prometheus-data:
+  grafana-data:
